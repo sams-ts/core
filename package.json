@@ -1,6 +1,6 @@
 {
   "name": "@sams-ts/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This library aims to facilitate making express apps with dependency injection.\r Interface of this library is very simple and we aim to keep it close to express.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
