@@ -1,0 +1,31 @@
+{
+  "name": "@sams-ts/core",
+  "version": "1.0.0",
+  "description": "This library aims to facilitate making express apps with dependency injection.\r Interface of this library is very simple and we aim to keep it close to express.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "npx nodemon src/user/main.ts",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sams-ts/core"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}
