@@ -10,5 +10,6 @@ export enum ParamDecorators {
     QUERY = "query",
     PARAMS = "params",
     REQ = "req",
-    RES = "res"
+    RES = "res",
+    NEXT = "next",
 }

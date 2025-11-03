@@ -53,6 +53,7 @@ const Controller = (route = "/") => <T extends {new(...args:any[]):{}}>(construc
                         }
                         else if(marker === ParamDecorators.REQ) methodParams[key as keyof {}] = req
                         else if(marker === ParamDecorators.RES) methodParams[key as keyof {}] = res
+                        else if(marker === ParamDecorators.NEXT) methodParams[key as keyof {}] = next
                     }
                 }
                 const data = await container.instances[constructor.name][handlerName]?.(...methodParams);
