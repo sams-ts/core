@@ -5,7 +5,7 @@ To beign, you can import App decorator from sams-ts/core and use it like this:
 
 ```ts
 import express from "express"
-import { App } from "sams-ts/core"
+import { App } from "@sams-ts/core"
 
 const PORT = process.env.PORT || 3500;
 
@@ -20,7 +20,7 @@ but now, instead of doing that, all you have to do is import @Controller and map
 and make a controller like this:
 
 ```ts
-import { Controller, Get } from "sams-ts/core";
+import { Controller, Get } from "@sams-ts/core";
 import { Request, Response } from "express";
 
 @Controller("/api/user")
@@ -53,9 +53,9 @@ Here is a example for how would development flow go with this library
 
 user.repository.ts
 ```ts
-import { Component } from "sams-ts/core"
+import { Component } from "@sams-ts/core"
 
-@Component
+@Component()
 class UserRepository {
     public async getUser() {
         return { id: 1, name: "Mehdi" }
@@ -70,9 +70,9 @@ user.service.ts
 import { Autowired, Component } from "sams-ts/core";
 import UserRepository from "./user.repository";
 
-@Component
+@Component()
 class UserService {
-    @Autowired private userRepo: UserRepository // This is a Property Injection
+    @Autowired() private userRepo: UserRepository // This is a Property Injection
     constructor(private readonly userRepo: UserRepository) {} // This is a constructor injection
 
     /* Constructor injections are performed automatically if class is marked as Component */
@@ -88,7 +88,7 @@ export default UserService
 user.controller.ts
 ```ts
 import { Controller, Get } from "sams-ts/core";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import UserService from "./user.service";
 
 @Controller("/api/user")
@@ -96,7 +96,7 @@ class UserController {
     constructor(private readonly userService: UserService) {}
 
     @Get("/:id")
-    public async getUser(req: Request, res: Response) {
+    public async getUser(req: Request, res: Response, next: NextFunction) {
         const user = await this.userService.getUser()
         res.status(200).send({ ...user, params: req.params, query: req.query })   
     }
@@ -107,31 +107,142 @@ export default UserController
 
 # Validation in sams-ts/core
 
-For validations to work against @Body, @Param or @Query, you have to add a validator to sams-ts/core like this:
+@sams-ts/core offers much more flexibility when it comes to performing validations. It provides you with
+such an interface that makes it very easy to plug-in any validation library of your choice.
+
+⚠️ One thing that you must remember is that It's executed right before the request handler executes. It DOESNOT
+apply at all to middlewares. They are executed before this function so don't expect it to work in middlewares
+nor decorators @Body, @Param and @Query are supposed to be used in middlewares. They won't work.
+
+You can create a file with any name say ```validator.ts``` and use our function ```setValidator``` imported
+from @sams-ts/core to add your own validation function like this:
 
 ```ts
-import { setValidator } from "sams-ts/core"
+import { setValidator } from "@sams-ts/core"
+
+setValidator(async(payload, type, decoratorArguments) => {
+    /* Your custom validation logic */
+}) 
+```
+
+It will be executed whenever you use @Body, @Param or @Query decorator.
+We're sure you've noticed `payload`, `type` and `decoratorArguments` and probably thinking what are these.
+They are simpler than they look, let's take an example below to understand why they
+exist and how can we use them.
+
+Now you'll have a controller like below i:e user.controller.ts,
+
+```ts
+import { Controller, Post, Body, Param } from "@sams-ts/core"
+
+@Controller("/api/user")
+export class UserController {
+    @Post("/create")
+    async createUser(@Body() body: any) {
+        return { body }
+    }
+
+    @Post("/subscription")
+    async createSubscription(@Param() params: any) {
+        return { params }
+    }
+}
+```
+
+As you can obviously guess, body in createUser method will be express's req.body and
+params would be req.params. That's exactly what `payload` points to in setValidator
+function. Since decorators (Body, Param, Query) share same validator function, calling
+them i:e @Body() body: any would invoke your handler with payload = body, similarly
+when using params, payload would be params object.
+
+Now the `type` parameter reflects the type of the parameter. It can have like a
+number of usecases. We will cover one example below.
+
+Next thing is `decoratorArguments`. It refers to whatever you pass into the decorator as arguments.
+Like if i pass @Body({ hello: "World" }), then at runtime, decoratorArguments[0] would be { hello: "World" }.
+Similarly, @Body(1,2,3,4) would result in decoratorArguments = { '0': 1, '1': 2, '2': 3, '3': 4}.
+
+Now why was such a thing needed? It's because we left it to you to customize it as you
+want. This enables us to support validations for any library that exists that too in parallel.
+Below are three examples of validation with "yup", "class-validator" and then both combined.
+
+Here's our user.controller.ts file
+
+```ts
+import { Body, Controller, Param, Post } from "@sams-ts/core"
+import { IsString } from "class-validator"
+import * as yup from "yup"
+
+const paramsSchema = yup.object({
+    id: yup.string().required(),
+})
+
+class CreateUserDto {
+    @IsString()
+    username: string;
+}
+
+@Controller("/api/users")
+export class UserController {
+
+    @Post("/create/:id")
+    async createUser(@Body() body: CreateUserDto) {
+        return { body }
+    }
+
+    @Post("/subscription")
+    createSubscription(@Param(paramsSchema) params: yup.InferType<typeof paramsSchema>) {
+        return { params }
+    }
+}
+```
+
+Here's our validator.ts file
+
+```ts
+import { setValidator } from "@sams-ts/core"
+
 import { validateOrReject } from "class-validator"
 
-setValidator(validateOrReject)
+import { ObjectSchema } from "yup"
+
+setValidator(async(object, type, decoratorArguments) => {
+    const schema = decoratorArguments?.[0];
+    if(schema instanceof ObjectSchema) return await schema.validate(object);
+    else if(!(schema instanceof ObjectSchema)) {
+        const inst = new type()
+        Object.assign(inst, object)
+        await validateOrReject(inst)
+    }
+}) 
 ```
 
-```ts setValidator``` function takes parameter function that can reject or resolve.
+We made two endpoints, that use different decorators, with two very good libraries.
 
-now you can perform validations in controllers via following decorator:
+Let's study it one by one
+
+### Create User method with Class-Validator
+
+When we do 
 ```ts
-class LoginDto {
-    @IsString()
-    email: string;
-    @IsString()
-    password: string;
-}
-
-@Post()
-async test(@Body body: LoginDto) {
-    return { ...body, url: req?.url }
-}
+@Body() body: CreateUserDto
 ```
+
+Our validator function gets payload that'll be req.body, and type is going to be CreateUserDto
+class, hence you can see we instantiated the type, assigned the object to class instance and
+validated it exactly like the docs of class-validator.
+
+### Create Subscription method with Yup
+
+When we do @Param(paramsSchema) params: yup.InferType<typeof paramsSchema>, the validator
+function receives "req.params" as payload, type can be ignored here as we don't need it.
+We need actual schema for yup to validate, so what we did is we passed schema to the
+decorator itself hence we can access it as decoratorArguments[0]. Thus we were able to
+call validate asynchronously and it worked.
+
+The whole point of having such a thing is its open for extension to literally any library
+or your own custom validation logic. And if you want to optionally pass around some objects
+with data, you can also do it easily. hence more customizable.
 
 # Customize error response:
 
@@ -142,25 +253,22 @@ This ```ts setErrorAccessor``` function takes a callback function.
 sams-ts/core will automatically pass thrown error to this callback function at runtime
 and send back value returned by this function as response to user
 
-Here's how you can define an error accessor function
-```ts
-/* Feel free to name it after your pet or your wife if any */
-function parseError(error: any) {
-    return error?.details?.whatever
-}
-```
-
-Now set it like this:
+Here's how you can define an error accessor function and set it as a global error handler
 
 ```ts
 import { setErrorAccessor } from "sams-ts/core"
+
+/* Feel free to name it */
+function parseError(error: any) {
+    return error?.details?.whatever
+}
 
 setErrorAccessor(parseError)
 
 // in handler
 
 @Post()
-async test(@Req req: Request) {
+async test(@Req() req: Request) {
     const validated = await schema.validate(req.body)
     return { ...body, url: req?.url }
 }
@@ -175,13 +283,19 @@ We have following additonal decorators as well to manage it:
 1. Req (injects request object)
 
 ```ts
-@Req req: Request
+@Req() req: Request
 ```
 
 2. Res (injects response object)
 
 ```ts
-@Res res: Response
+@Res() res: Response
+```
+
+3. Next (injects next function)
+
+```ts
+@Next() next: NextFunction
 ```
 
 # Middlewares:
@@ -233,7 +347,7 @@ here is an example:
 
 user.service.ts
 ```ts
-@Component
+@Component()
 class UserService {
     constructor(private readonly userRepo: UserRepository) {}
 
@@ -247,7 +361,7 @@ export default UserService
 
 user.repository.ts
 ```ts
-@Component
+@Component()
 class UserRepository {
     @Lazy("UserService") private userService: UserService
 
@@ -267,7 +381,7 @@ OR
 
 user.repository.ts
 ```ts
-@Component
+@Component()
 class UserRepository {
     constructor(@Lazy("UserService", "userService") private userService: UserService) {}
     
@@ -363,7 +477,7 @@ const dataSource = container.get(DataSource) // It will return the data source i
 Now you can inject it like this:
 
 ```ts
-@Component
+@Component()
 class UserRepository {
     constructor(private readonly dataSource: DataSource) {}
 

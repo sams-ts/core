@@ -43,7 +43,8 @@ export interface IRequestHandlerParams {
         [key: string]: {
             [key: string]: {
                 type: any;
-                marker: ParamDecorators
+                marker: ParamDecorators;
+                [key: string]: any;
             }
         }
     }

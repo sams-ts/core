@@ -1,6 +1,7 @@
 import "reflect-metadata"
 import express, { Express } from "express"
 import { IClasses, IControllers, ILazyPeople, IMiddleware, IPendingRegisteration, IRequestHandlerParams, IServerInstance } from "./types"
+import { samsValidator } from "./methods/samsValidator"
 
 class Container {
     public classes: IClasses = {}
@@ -17,6 +18,7 @@ class Container {
 
     constructor() {
         this._app = express()
+        this._validate = samsValidator
     }
 
     public set errorAccessor(errorExtractor: (...args: any[]) => any) {
