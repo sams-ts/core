@@ -105,14 +105,152 @@ class UserController {
 export default UserController
 ```
 
-# Validation in sams-ts/core
+# Customising Validation in sams-ts/core
+
+⚠️ This section is only for customizing how validations work in @sams-ts/core.
+@sams-ts/core already has validation support for following libraries built into it:
+
+- Yup
+- Zod
+- Joi
+- Valibot
+- TypeBox
+- class-validator
+- Typia
+
+For above libraries, validation is going to work out of the box means you don't have
+to import setValidator function or do anything. Here are some snippets of libraries:
+
+```ts
+import { Body, Controller, Post, Param } from "@sams-ts/core"
+
+// 1️⃣ Yup
+import * as yup from "yup"
+
+// 2️⃣ Zod
+import { z } from "zod"
+
+// 3️⃣ Joi
+import Joi from "joi"
+
+// 4️⃣ Valibot
+import { object, string, parse } from "valibot"
+
+// 5️⃣ TypeBox
+import { Type, Static } from "@sinclair/typebox"
+
+// 6️⃣ class-validator
+import { IsString, IsEmail } from "class-validator"
+
+// 7️⃣ typia (optional runtime validation)
+import typia from "typia"
+
+//
+// 🧱 Schema definitions
+//
+
+// ✅ Yup Schema
+const yupSchema = yup.object({
+  username: yup.string().required(),
+  email: yup.string().email().required(),
+})
+
+// ✅ Zod Schema
+const zodSchema = z.object({
+  username: z.string().min(3),
+  email: z.string().email(),
+})
+
+// ✅ Joi Schema
+const joiSchema = Joi.object({
+  username: Joi.string().required(),
+  email: Joi.string().email().required(),
+})
+
+// ✅ Valibot Schema
+const valibotSchema = object({
+  username: string(),
+  email: string(),
+})
+
+// ✅ TypeBox Schema
+const typeboxSchema = Type.Object({
+  username: Type.String(),
+  email: Type.String({ format: "email" }),
+})
+type TypeboxUser = Static<typeof typeboxSchema>
+
+// ✅ Class-Validator DTO
+class CreateUserDto {
+  @IsString()
+  username: string
+
+  @IsEmail()
+  email: string
+}
+
+// ✅ typia Type
+interface TypiaUser {
+  username: string
+  email: string
+}
+
+//
+// 🧩 Controller
+//
+@Controller("/api/users")
+export class UserController {
+
+  // ✅ 1. Yup Validation
+  @Post("/yup")
+  async createWithYup(@Body(yupSchema) body: yup.InferType<typeof yupSchema>) {
+    return { library: "yup", body }
+  }
+
+  // ✅ 2. Zod Validation
+  @Post("/zod")
+  async createWithZod(@Body(zodSchema) body: z.infer<typeof zodSchema>) {
+    return { library: "zod", body }
+  }
+
+  // ✅ 3. Joi Validation
+  @Post("/joi")
+  async createWithJoi(@Body(joiSchema) body: any) {
+    return { library: "joi", body }
+  }
+
+  // ✅ 4. Valibot Validation
+  @Post("/valibot")
+  async createWithValibot(@Body(valibotSchema) body: ReturnType<typeof parse>) {
+    return { library: "valibot", body }
+  }
+
+  // ✅ 5. TypeBox Validation
+  @Post("/typebox")
+  async createWithTypebox(@Body(typeboxSchema) body: TypeboxUser) {
+    return { library: "typebox", body }
+  }
+
+  // ✅ 6. Class-Validator
+  @Post("/class-validator")
+  async createWithClassValidator(@Body() body: CreateUserDto) {
+    return { library: "class-validator", body }
+  }
+
+  // ✅ 7. typia
+  @Post("/typia")
+  async createWithTypia(@Body() body: TypiaUser) {
+    return { library: "typia", body }
+  }
+}
+```
 
 @sams-ts/core offers much more flexibility when it comes to performing validations. It provides you with
 such an interface that makes it very easy to plug-in any validation library of your choice.
 
-⚠️ One thing that you must remember is that It's executed right before the request handler executes. It DOESNOT
-apply at all to middlewares. They are executed before this function so don't expect it to work in middlewares
-nor decorators @Body, @Param and @Query are supposed to be used in middlewares. They won't work.
+⚠️ One thing that you must remember is that It's executed right before the request handler executes. It **does not**
+apply at all to middlewares so don't expect it to work in middlewares nor decorators @Body, @Param and @Query 
+are supposed to be used in middlewares. They won't work.
 
 You can create a file with any name say ```validator.ts``` and use our function ```setValidator``` imported
 from @sams-ts/core to add your own validation function like this:
@@ -243,6 +381,26 @@ call validate asynchronously and it worked.
 The whole point of having such a thing is its open for extension to literally any library
 or your own custom validation logic. And if you want to optionally pass around some objects
 with data, you can also do it easily. hence more customizable.
+
+When you follow above docs, you'll loose above validation working out of the box.
+If you ever want to sort of extend it import our builtin validator
+
+```ts
+import { samsValidator } from "@sams-ts/core"
+```
+
+and call it inside of your own function like this
+
+```ts
+import { setValidator } from "@sams-ts/core"
+
+import { samsValidator } from "@sams-ts/core"
+
+setValidator(async(payload, type, decoratorArguments) => {
+    /* Your custom validation logic */
+    await samsValidator(payload, type, decoratorArguments)
+}) 
+```
 
 # Customize error response:
 

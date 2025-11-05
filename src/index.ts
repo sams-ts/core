@@ -14,6 +14,7 @@ import { Body, Req, Res, Query, Param, Next } from './ParamDec';
 import App from './App';
 import setValidator from './methods/setValidator';
 import { setErrorAccessor } from "./methods/setErrorAccessor";
+import { samsValidator } from "./methods/samsValidator";
 import Service from "./Service";
 
 export {
@@ -42,6 +43,7 @@ export {
     Next,
     App,
     setValidator,
+    samsValidator,
     setErrorAccessor,
     Get,
     Put,
