@@ -3,7 +3,6 @@ import Autowired from './Autowired';
 import Controller from './Controller';
 import Component from './Component';
 import Middlewares from "./Middlewares";
-import Lazy from "./Lazy";
 import BadRequestException from './exceptions/BadRequestException';
 import NotFoundException from './exceptions/NotFoundException';
 import UnauthorizedException from './exceptions/UnauthorizedException';
@@ -24,7 +23,6 @@ export {
     Component,
     Service,
     Middlewares,
-    Lazy,
     BadRequestException,
     NotFoundException,
     UnauthorizedException,
