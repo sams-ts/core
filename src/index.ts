@@ -1,5 +1,4 @@
 import { container } from "./main";
-import Autowired from './Autowired';
 import Controller from './Controller';
 import Component from './Component';
 import Middlewares from "./Middlewares";
@@ -18,7 +17,6 @@ import Service from "./Service";
 
 export {
     container,
-    Autowired,
     Controller,
     Component,
     Service,

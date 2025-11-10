@@ -3,14 +3,6 @@ import path from "path"
 
 import * as ts from "typescript"
 
-export const getPackagePath = (pkg: string) => {
-    try {
-        return require.resolve(pkg, { paths: [process.cwd()] })
-    } catch {
-        return ""
-    }
-}
-
 export async function extractClassMetadata(filePath: string): Promise<Record<string, any>> {
     const code = await fs.readFile(filePath, 'utf8');
 

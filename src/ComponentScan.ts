@@ -4,7 +4,7 @@ import path from "path"
 import { resolveCircularDependencies } from "./utils/resolveCircularDependencies"
 import { injectDependencies } from "./utils/injectDependencies"
 
-import { extractClassMetadata } from "./utils"
+import { extractClassMetadata } from "./utils/extractClassMetadata"
 
 import { IMetadata } from "./types"
 import { container } from "./main"
