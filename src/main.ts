@@ -1,6 +1,6 @@
 import "reflect-metadata"
 import express, { Express } from "express"
-import { IClasses, IControllers, ILazyPeople, IMiddleware, IPendingRegisteration, IRequestHandlerParams, IServerInstance } from "./types"
+import { IClasses, IControllers, ILazyInjectables, IMetadata, IMiddleware, IPendingRegisteration, IRequestHandlerParams, IServerInstance } from "./types"
 import { samsValidator } from "./methods/samsValidator"
 
 class Container {
@@ -9,12 +9,18 @@ class Container {
     public controllers: IControllers = {}
     public middlewares: IMiddleware = {}
     public pendingRegisteration: IPendingRegisteration = {}
-    public lazyPeople: ILazyPeople = {}
     public requestHandlerParams: IRequestHandlerParams = {}
+    private _paths: string[] = []
     private _validate: (...args: any[]) => Promise<any> = async() => {}
     private _app: Express
     private _server: IServerInstance
     private _errorAccessor: (...args: any[]) => any | undefined;
+    private _lazyInjectables = {}
+    
+    public metadata: IMetadata = {
+        interfaces: {},
+        classes: {}
+    }
 
     constructor() {
         this._app = express()
@@ -62,6 +68,22 @@ class Container {
 
     public get<T>(classType: { new (): T }): T {
         return this.instances[classType?.name]
+    }
+
+    public get lazyInjectibles() {
+        return this._lazyInjectables
+    }
+
+    public set lazyInjectibles(lazyInjectibles: ILazyInjectables) {
+        this._lazyInjectables = lazyInjectibles
+    }
+
+    public get paths() {
+        return this._paths
+    }
+
+    public addPath(path: string) {
+        this._paths.push(path)
     }
 }
 

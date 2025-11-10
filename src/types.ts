@@ -3,7 +3,7 @@ import { ParamDecorators } from "./enums/constants";
 import { IncomingMessage, Server, ServerResponse } from "http";
 
 export interface IClasses {
-    [key: string]: Function;
+    [key: string]: ({new(...args:any[]): {}});
 }
 
 export interface IControllers {
@@ -31,11 +31,11 @@ export interface IPendingRegisteration {
    }[];
 }
 
-export interface ILazyPeople {
+export interface ILazyInjectables {
     [key: string]: {
         classToInjectIn: string;
         property: string;
-    }
+    };
 }
 
 export interface IRequestHandlerParams {
@@ -67,4 +67,16 @@ export interface IApp {
 
 export interface MapOf<T> {
     [key: string]: T;
+}
+
+export interface IMetadataClassData {
+    implements: string | null;
+    constructorParams: Array<{ name: string, type: string, index: number }>
+}
+
+export interface IMetadata {
+    interfaces: Record<string, string>;
+    classes: {
+        [key: string]: IMetadataClassData
+    };
 }

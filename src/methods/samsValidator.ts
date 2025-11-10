@@ -1,4 +1,4 @@
-import { getPackagePath } from "../utils"
+import { getPackagePath } from "../utils/getPackagePath"
 
 /**
  * Universal validation handler that intelligently detects and executes

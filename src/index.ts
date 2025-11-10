@@ -1,9 +1,7 @@
 import { container } from "./main";
-import Autowired from './Autowired';
 import Controller from './Controller';
 import Component from './Component';
 import Middlewares from "./Middlewares";
-import Lazy from "./Lazy";
 import BadRequestException from './exceptions/BadRequestException';
 import NotFoundException from './exceptions/NotFoundException';
 import UnauthorizedException from './exceptions/UnauthorizedException';
@@ -19,12 +17,10 @@ import Service from "./Service";
 
 export {
     container,
-    Autowired,
     Controller,
     Component,
     Service,
     Middlewares,
-    Lazy,
     BadRequestException,
     NotFoundException,
     UnauthorizedException,

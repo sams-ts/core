@@ -11,7 +11,7 @@ const App = ({ port, middlewares, appRootPath }: IApp) => <T extends {new(...arg
         appRootPath = NODE_ENV === "production" ? "dist" : "src"
 
     /** Run a component scan in directories */
-    ComponentScan(appRootPath)(constructor)
+    ComponentScan(appRootPath)
 
     /* Attach Middlewares from outside */
     middlewares?.forEach(middleware => container.app.use(middleware))
